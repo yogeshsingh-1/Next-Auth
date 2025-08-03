@@ -21,6 +21,7 @@
 //     console.log(context)
 //     return NextResponse.json("hhhvvvvvvv")
 // }
+import GoogleProvider from "next-auth/providers/google";
 
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
@@ -42,6 +43,10 @@ const handler = NextAuth({
         return { email: email, password: password };
       },
     }),
+    GoogleProvider({
+    clientId: process.env.GOOGLE_CLIENT_ID || "",
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET || ""
+  })
   ],
   callbacks : {
     // block user with email
