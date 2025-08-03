@@ -21,14 +21,14 @@
 //     console.log(context)
 //     return NextResponse.json("hhhvvvvvvv")
 // }
-import GoogleProvider from "next-auth/providers/google";
-
 import NextAuth from "next-auth";
+import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
+
 const handler = NextAuth({
   providers: [
     CredentialsProvider({
-      name: "Credentails",
+      name: "Credentials",
       credentials: {
         email: { label: "Email", type: "text", placeholder: "Email" },
         password: {
@@ -38,40 +38,45 @@ const handler = NextAuth({
         },
       },
       async authorize(credentials: any) {
-        const email = credentials.email;
-        const password = credentials.password;
-        return { email: email, password: password };
+        const { email, password } = credentials;
+
+        // TODO: Replace this with your real DB/auth check
+        if (email && password) {
+          return { id: "user1", email };
+        }
+
+        return null;
       },
     }),
     GoogleProvider({
-    clientId: process.env.GOOGLE_CLIENT_ID || "",
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET || ""
-  })
+      clientId: process.env.GOOGLE_CLIENT_ID || "",
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+    }),
   ],
-  callbacks : {
-    // block user with email
-    signIn : ((user)=>{
-        if(user?.email === "a@agmail.com"){
-            return false
-        }
-        return true
-    })
-
-    // add inside token name and type
-    jwt : ({token,user})=>{
-        token.name ="abc";
-        token.type = "admin"
-        return token
+  callbacks: {
+    async signIn({ user }) {
+      if (user?.email === "a@agmail.com") return false;
+      return true;
     },
-    // for get id of the user 
-    session : ({session,token,user}:any){
-        if(session && session.user){
-            session.user.id = token.userId;
-        }
-        return session;
-    }
-  }
+    async jwt({ token, user }) {
+      if (user) {
+        token.name = "abc";
+        token.type = "admin";
+        token.userId = user.id;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      if (session.user) {
+        session.user.id = token.userId;
+        session.user.type = token.type;
+      }
+      return session;
+    },
+  },
+  session: {
+    strategy: "jwt",
+  },
+  secret: process.env.NEXTAUTH_SECRET,
 });
-// export const GET = handler;
-// export const POST =handler;
 export { handler as GET, handler as POST };
